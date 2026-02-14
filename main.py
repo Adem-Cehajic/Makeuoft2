@@ -4,8 +4,7 @@ from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials, firestore, storage
 import cv2
-import face_recognition_models
-import face_recognition
+from deepface import DeepFace
 flag = 1
 imglist = ['Jahangeer.jpg','Jessica.webp','Emily.webp','Lily.jpg']
 imgcode = []
@@ -71,6 +70,6 @@ if(flag == 0):
     print(response.text)
 
 for x in range(4):
-    img = face_recognition.load_image_file('downloaded_images/' + imglist[x])
-    imgcode[x] = face_recognition.face_encodings(img)[0]
-print(imgcode)
+    result = DeepFace.verify("downloaded_images/Jahangeer.jpg", "downloaded_images/"+imglist[x])
+    print(result)
+
