@@ -11,7 +11,7 @@ import numpy as np
 import requests
 import time
 app = Flask(__name__)
-exitflag = 0
+exitflag = 1
 flag = 1
 imglist = []
 # The client automatically picks up the API key from the environment variable
@@ -134,12 +134,15 @@ def upload_photo():
                 data=image_bytes,
                 mime_type='image/jpeg',
             ),
-        "There is a beatiful person named" + thej + " who  can be seen  in the image attatched and is very interested in" + interests + "make 5 pick up lines and provide no additional text other than the pick up lines seperated by comas"]
+        "There is a beatiful person named" + thej + " who  can be seen  in the image attatched and is very interested in" + interests + "make 5 pick up lines/conversation starters and provide no additional text other than the pick up lines seperated by comas"]
     )
     print(response.text)
 
     
     return response.text, 200
 
+@app.route('/poop', methods=['POST'])
+def poopy():
+    return "poop", 200
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
