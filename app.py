@@ -12,7 +12,7 @@ import requests
 import time
 app = Flask(__name__)
 exitflag = 1
-flag = 1
+flag = 0
 imglist = []
 # The client automatically picks up the API key from the environment variable
 load_dotenv()
@@ -51,10 +51,9 @@ for doc in collections: #goes through all the people in the roster to download i
     #print("Data:", doc.to_dict())
 
     dat = doc.to_dict()
-    print(dat)
+    #print(dat)
     img_url = dat.get('img')
     name = dat.get('name')
-    imglist.append(name)
     #print(dat)
     if 'firebasestorage' in img_url:
         # Extract the path between '/o/' and '?'
@@ -70,6 +69,7 @@ for doc in collections: #goes through all the people in the roster to download i
     pic, ext = os.path.splitext(local_filename)
     newfile = name + ext
     download_and_save(blob_path, f"downloaded_images/{newfile}")
+    imglist.append(newfile)
 
 while(exitflag == 0):
     try:
@@ -106,9 +106,9 @@ while(exitflag == 0):
     
     time.sleep(3)
 # Now you have the image
-print('yay')
+print(imglist)
 
-@app.route('/upload', methods=['POST']) # the single request to go from in to out
+@app.route('/upload', methods=['GET']) # the single request to go from in to out
 def upload_photo():
     image_data = 'temp.jpg'
     
@@ -117,15 +117,20 @@ def upload_photo():
       image_bytes = f.read()
     result = []
     for x in range(4):
-        result[x] = DeepFace.verify(image_data, "downloaded_images/"+imglist[x])
-    max_value = max(result)
-    max_index = result.index(max_value)
+        result.append(DeepFace.verify(image_data, "downloaded_images/"+imglist[x]))
+        
+    #print(result)
+    max_index = max(range(len(result)), key=lambda i: result[i]['confidence'])
     thej = imglist[max_index] 
+    thej = thej.partition(".")[0]
+    print(thej)
     docs = db.collection('roster').where('name', '==', thej).limit(1).stream()
     for dc in docs:
-        special = doc.to_dict()
+        special = dc.to_dict()
         interests = special['interests']
         print(interests)  # ['Hiking', 'Coffee']
+        interests = ','.join(interests)
+
     if(flag == 0):
         response = client.models.generate_content(
         model="gemini-2.5-flash", # Use an available model, e.g., gemini-2.5-flash
@@ -134,15 +139,15 @@ def upload_photo():
                 data=image_bytes,
                 mime_type='image/jpeg',
             ),
-        "There is a beatiful person named" + thej + " who  can be seen  in the image attatched and is very interested in" + interests + "make 5 pick up lines/conversation starters and provide no additional text other than the pick up lines seperated by comas"]
+        "There is a beatiful person named" + thej + " who  can be seen  in the image attatched and is very interested in" + interests + "make 5 pick up lines/conversation starters and provide no additional text other than the pick up lines. Also ensure that you next uses no punction and only contains letters and spaces but seperates the 5 lines by a > key"]
     )
     print(response.text)
 
     
     return response.text, 200
 
-@app.route('/poop', methods=['POST'])
+@app.route('/poop', methods=['GET'])
 def poopy():
-    return "poop", 200
+    return "They say your name means Conqueror of the World but I think you just conquered my appetite for anyone else so lets go eat>I heard you are a world class foodie Jahangir which is perfect because I am a world class snack>Forget the Michelin stars because the only five star view I need tonight is you across the dinner table>They say the way to a mans heart is through his stomach but I think the way to Jahangirs heart is a reservation for two>I was looking for something sweet on the menu but then I saw you and realized I already found the best treat in the room", 200
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
